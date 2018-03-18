@@ -14,6 +14,50 @@ def wordcount(content):
     return result
 
 
+def codecount(fd):
+    codelines = 0
+    blanklines = 0
+    commentlines = 0
+    isComment = False
+    isString = False
+    isCode = False
+    for line in fd.readlines():
+        line = line.strip().replace('{', '').replace(
+            '}', '').replace(';', '')  # 去掉{};以便计算空行
+        if not isComment and not line:
+            blanklines += 1
+            continue
+        if isComment:
+            commentlines += 1
+        elif line.replace('/', '').replace('*', ''):
+            codelines += 1
+        line = '\n'+line+'\n'
+        for i in range(1, len(line)):
+            if line[i] == '"' and line[i-1] != '\\':
+                isString = not isString
+            if not isString:
+                if line[i] == '/' and line[i+1] == '/' and not isComment:
+                    if not line[:i].split():
+                        blanklines += 1
+                    commentlines += 1
+                    break
+                if line[i] == '/' and line[i+1] == '*' and not isComment:
+                    isComment = True
+                    commentlines += 1
+                    i += 1
+                if line[i] == '*' and line[i+1] == '/':
+                    isComment = False
+                    i += 1
+
+    result = {
+        "codelines": codelines,
+        "blanklines": blanklines,
+        "commentlines": commentlines
+    }
+
+    return result
+
+
 def print_result(args, result):
     output = open(args.output, "w+")
     for r in result:
@@ -51,6 +95,9 @@ def main(args, rootpath):
             elif re.findall(filename, name):
                 fd = open(path)
                 wc = wordcount(fd.read())
+                if args.code:
+                    fd.seek(0)
+                    wc.update(codecount(fd))
                 wc["filename"] = name
                 result.append(wc)
                 fd.close()
@@ -62,6 +109,9 @@ def main(args, rootpath):
             elif re.findall(filename, name):
                 fd = open(path)
                 wc = wordcount(fd.read())
+                if args.code:
+                    fd.seek(0)
+                    wc.update(codecount(fd))
                 wc["filename"] = name
                 result.append(wc)
                 fd.close()
