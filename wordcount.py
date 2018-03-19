@@ -8,7 +8,7 @@ def wordcount(content):
     result = {
         "words": len(re.split(r"[\s,]+", content))-1,  # 单词数
         "lines": len(content.split('\n'))-1,  # 行数
-        "bytes": len(content)  # 字符数
+        "bytes": len(content)-1  # 字符数
     }
 
     return result
@@ -62,14 +62,6 @@ def print_result(args, result):
     output = open(args.output, "w+")
     for r in result:
         s = "{}".format(r["filename"])
-        if args.stoplist:
-            stoplist = open(args.stoplist)
-            stopchars = stoplist.read().split()
-            count = 0
-            for c in stopchars:
-                count += len(re.findall(c, content))
-            r["words"] -= count
-            stoplist.close()
         if args.bytes:
             s += ", 字符数: {}".format(r["bytes"])
         if args.lines:
@@ -95,6 +87,16 @@ def main(args, rootpath):
             elif re.findall(filename, name):
                 fd = open(path)
                 wc = wordcount(fd.read())
+                if args.stoplist:
+                    fd.seek(0)
+                    content = fd.read()
+                    stoplist = open(args.stoplist)
+                    stopchars = stoplist.read().split()
+                    count = 0
+                    for c in stopchars:
+                        count += len(re.findall(c, content))
+                    r["words"] -= count
+                    stoplist.close()
                 if args.code:
                     fd.seek(0)
                     wc.update(codecount(fd))
@@ -109,6 +111,16 @@ def main(args, rootpath):
             elif re.findall(filename, name):
                 fd = open(path)
                 wc = wordcount(fd.read())
+                if args.stoplist:
+                    fd.seek(0)
+                    content = fd.read()
+                    stoplist = open(args.stoplist)
+                    stopchars = stoplist.read().split()
+                    count = 0
+                    for c in stopchars:
+                        count += len(re.findall(c, content))
+                    r["words"] -= count
+                    stoplist.close()
                 if args.code:
                     fd.seek(0)
                     wc.update(codecount(fd))
